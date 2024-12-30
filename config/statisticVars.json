@@ -1,0 +1,29 @@
+[
+  {
+    "filter": [
+      {
+        "func": "eq",
+        "path": "name",
+        "params": "zhangsan",
+        "type": "string"
+      }
+    ],
+    "function": "distinct",
+    "dimensions": [
+      {
+        "path": "activityId",
+        "type": "string"
+      }
+    ],
+    "data": {
+      "path": "user",
+      "type": "string"
+    },
+    "window": {
+      "type": "time",
+      "size": 86400
+    },
+    "name": "user_cnt_per_activity_1d",
+    "type": "int"
+  }
+]
