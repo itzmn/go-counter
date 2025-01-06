@@ -26,4 +26,4 @@ WORKDIR /opt/go-counter
 EXPOSE 19999 20000
 
 #执行项目的命令，启动服务
-CMD ["./start.sh"]
+CMD ["./bin/start.sh"]

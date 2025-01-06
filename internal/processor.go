@@ -2,10 +2,13 @@ package internal
 
 import (
 	"fmt"
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	zlog "go-counter/logs"
 	"go-counter/thirdpart"
 	"go-counter/util"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -26,7 +29,6 @@ func process(requestData string) string {
 
 	VariableMutex.RLock()
 	var resultChan = make(chan map[string]interface{}, len(counterVariables))
-	//var statisticVarMap = storage.CounterVariables
 	for dim, statisticVars := range counterVariables {
 
 		waitGroup.Add(1)
@@ -34,19 +36,6 @@ func process(requestData string) string {
 
 	}
 	VariableMutex.RUnlock()
-
-	//var statisticVarMap = map[string][]string{"activityId": {
-	//	//`{"filter":[{"func":"eq","path":"name","params":"zhangsan","type":"string"}],"function":"count","dimensions":[{"path":"activityId","type":"string"}],"data":{"path":"requestId","type":"string"},"window":{"type":"time","size":86400},"name":"cnt_per_activity_1d","type":"int"}`,
-	//	//`{"filter":[{"func":"eq","path":"name","params":"zhangsan","type":"string"}],"function":"sum","dimensions":[{"path":"activityId","type":"string"}],"data":{"path":"amount","type":"int"},"window":{"type":"time","size":86400},"name":"amount_sum_per_activity_1d","type":"int"}`,
-	//	`{"filter":[{"func":"eq","path":"name","params":"zhangsan","type":"string"}],"function":"distinct","dimensions":[{"path":"activityId","type":"string"}],"data":{"path":"user","type":"string"},"window":{"type":"time","size":86400},"name":"user_cnt_per_activity_1d","type":"int"}`,
-	//}}
-
-	//for dim, statisticVars := range statisticVarMap {
-	//
-	//	waitGroup.Add(1)
-	//	go statisticOneDim(reqId, statisticVars, dim, &requestData, resultChan, &waitGroup)
-	//
-	//}
 
 	// 开启计时器
 	//timeout := time.After(50 * time.Millisecond)
@@ -83,10 +72,7 @@ type DimProcessor struct {
 }
 
 func (p *DimProcessor) processCounter(counterC *CounterC, reqData *string) {
-	haveDim := counterC.dim(reqData)
-	if !haveDim {
-		return
-	}
+
 	filterRes := counterC.doFilter(reqData)
 	if !filterRes {
 		return
@@ -96,6 +82,7 @@ func (p *DimProcessor) processCounter(counterC *CounterC, reqData *string) {
 		return
 	}
 
+	counterC.DimArrStr = p.DimArrStr
 	counterC.prePareSlot(reqData)
 
 	p.ProcessVars = append(p.ProcessVars, counterC)
@@ -115,15 +102,15 @@ func (p *DimProcessor) statisticCounter() map[string]interface{} {
 		fieldV := fieldVs[index]
 
 		if counterC.Function == "count" || counterC.Function == "sum" {
-			counterC.DataValue = 1
-
-			if counterC.Type == "int" {
-				counterC.count(fieldV)
-			} else if counterC.Type == "float32" {
-				counterC.counterFloat(fieldV)
-			} else {
-				continue
-			}
+			//counterC.DataValue = 1
+			//
+			//if counterC.Type == "int" {
+			counterC.count(fieldV)
+			//} else if counterC.Type == "float32" {
+			//	counterC.counterFloat(fieldV)
+			//} else {
+			//	continue
+			//}
 
 		} else if counterC.Function == "distinct" {
 			counterC.distinct(fieldV)
@@ -137,26 +124,35 @@ func (p *DimProcessor) statisticCounter() map[string]interface{} {
 	return resMap
 }
 
-func statisticOneDim(reqId, dim string, counterCs []CounterC, requestData *string, resultChan chan map[string]interface{}, waitGroup *sync.WaitGroup) {
+func statisticOneDim(reqId, dim string, counterCs []CounterC, requestData *string,
+	resultChan chan map[string]interface{}, waitGroup *sync.WaitGroup) {
 
 	dimStart := time.Now().UnixNano()
 	defer waitGroup.Done()
 
 	dimProcessor := new(DimProcessor)
 
-	// TODO dim处理需要抽到这层来
+	// dim处理提前处理
+	var dimArr []string
+	dims := strings.Split(dim, VariableSplit)
+	for _, dimension := range dims {
+		r := gjson.Get(*requestData, dimension)
+		if !r.Exists() {
+			return
+		}
+		dimStr := r.String()
+		dimArr = append(dimArr, dimStr)
+	}
+	sort.Strings(dimArr)
+	dimArrStr := strings.Join(dimArr, VariableSplit)
+	dimProcessor.DimArrStr = "counter:" + util.Md5Sum(dimArrStr)
 
 	for _, counterC := range counterCs {
-		//counterC := new(CounterC)
-		//if err := json.Unmarshal([]byte(statisticVar), &counterC); err != nil {
-		//	continue
-		//}
 		dimProcessor.processCounter(&counterC, requestData)
 	}
 	if len(dimProcessor.ProcessVars) == 0 {
 		return
 	}
-	dimProcessor.DimArrStr = dimProcessor.ProcessVars[0].DimArrStr
 	statisticCounterRes := dimProcessor.statisticCounter()
 
 	zlog.LogReq(zlog.LL_INFO, "process_dim", reqId, fmt.Sprintf("process dim over, dimName: %v, dimValue: %v, cost:%v",

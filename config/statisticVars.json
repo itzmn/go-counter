@@ -3,8 +3,8 @@
     "filter": [
       {
         "func": "eq",
-        "path": "name",
-        "params": "zhangsan",
+        "path": "organization",
+        "params": "itzmn",
         "type": "string"
       }
     ],
@@ -24,6 +24,37 @@
       "size": 86400
     },
     "name": "user_cnt_per_activity_1d",
+    "type": "int"
+  },
+  {
+    "filter": [
+      {
+        "func": "eq",
+        "path": "organization",
+        "params": "itzmn",
+        "type": "string"
+      }
+    ],
+    "function": "sum",
+    "dimensions": [
+      {
+        "path": "activityId",
+        "type": "string"
+      },
+      {
+        "path": "user",
+        "type": "string"
+      }
+    ],
+    "data": {
+      "path": "amount",
+      "type": "int"
+    },
+    "window": {
+      "type": "time",
+      "size": 86400
+    },
+    "name": "amount_sum_per_activity_user_1d",
     "type": "int"
   }
 ]

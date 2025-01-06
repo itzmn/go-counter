@@ -128,7 +128,7 @@ func createKVLogger(conf *LogConf) zloger {
 		zapcore.AddSync(getLogWriter(conf)),
 		zapcore.DebugLevel,
 	)
-	logger := zap.New(core, zap.AddCaller()) //zap.AddStacktrace(zap.WarnLevel)
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(2)) //zap.AddStacktrace(zap.WarnLevel)
 	kvlogger := &kvLogger{
 		Logger: logger,
 	}

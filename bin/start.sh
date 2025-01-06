@@ -9,8 +9,8 @@ BIN_DIR=$(
     pwd
 )
 
-cd $BIN_DIR
-mkdir -p log
+ROOT_DIR=$(cd $BIN_DIR/..; pwd)
+
 ls
 
-./go-counter
+${ROOT_DIR}/bin/go-counter -config=../config/config.json -variablesPath=../config/statisticVars.json

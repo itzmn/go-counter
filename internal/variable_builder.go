@@ -19,6 +19,10 @@ var variablesPath = flag.String("variables", "./config/statisticVars.json", "sta
 var counterVariables map[string][]CounterC
 var VariableMutex sync.RWMutex
 
+const (
+	VariableSplit = ":"
+)
+
 func LoadVariables() error {
 
 	go func() {
@@ -51,14 +55,14 @@ func loadVariables() error {
 	tmpMap := make(map[string][]CounterC)
 
 	for _, c := range tmp {
-		dimArr := []string{}
+		var dimArr []string
 		for _, dimension := range c.Dimensions {
 			if dimension.Path != "" {
 				dimArr = append(dimArr, dimension.Path)
 			}
 		}
 		sort.Strings(dimArr)
-		join := strings.Join(dimArr, ":")
+		join := strings.Join(dimArr, VariableSplit)
 		v, ok := tmpMap[join]
 		if !ok {
 			v = make([]CounterC, 0, 1)

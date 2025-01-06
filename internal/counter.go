@@ -7,9 +7,6 @@ import (
 	"github.com/tidwall/gjson"
 	zlog "go-counter/logs"
 	"go-counter/thirdpart"
-	"go-counter/util"
-	"sort"
-	"strings"
 )
 
 type CounterC struct {
@@ -42,22 +39,6 @@ type CounterC struct {
 	Name string `json:"name"`
 }
 
-func (counterC *CounterC) dim(reqData *string) bool {
-	var dimArr []string
-	for _, dimension := range counterC.Dimensions {
-		//dim, err := GetValueFromJSON(reqData, dimension.Path, dimension.Type)
-		r := gjson.Get(*reqData, dimension.Path)
-		if !r.Exists() {
-			return false
-		}
-		dim := r.String()
-		dimArr = append(dimArr, dim)
-	}
-	sort.Strings(dimArr)
-	dimArrStr := strings.Join(dimArr, ":")
-	counterC.DimArrStr = "counter:" + util.Md5Sum(dimArrStr)
-	return true
-}
 
 func (counterC *CounterC) doFilter(reqData *string) bool {
 	for _, filter := range counterC.Filter {
@@ -112,6 +93,9 @@ func (counterC *CounterC) prePareSlot(reqData *string) {
 }
 
 func (counterC *CounterC) count(fieldV interface{}) {
+	if counterC.Function == "count" {
+		counterC.DataValue = 1
+	}
 	window := make([]ValueSlot, 0)
 	total := 0
 	dv := counterC.DataValue.(int)
@@ -178,7 +162,7 @@ func (counterC *CounterC) counterFloat(fieldV interface{}) {
 		window = append(window, v)
 	}
 	counterC.ResultValue = total
-	counterC.updateWindow(window)
+	go counterC.updateWindow(window)
 }
 
 func (counterC *CounterC) distinct(fieldV interface{}) {
@@ -208,7 +192,7 @@ func (counterC *CounterC) distinct(fieldV interface{}) {
 		tmpMap[dv] = struct{}{}
 	}
 	counterC.ResultValue = len(tmpMap)
-	counterC.updateWindow(window)
+	go counterC.updateWindow(window)
 
 }
 

@@ -14,11 +14,13 @@ ROOT_DIR=$(
 
 
 mkdir -p $ROOT_DIR/dist/log
+mkdir -p $ROOT_DIR/dist/config
+mkdir -p $ROOT_DIR/dist/bin
 
 go build $ROOT_DIR/main/go-counter.go
 
-mv go-counter $ROOT_DIR/dist
-cp $ROOT_DIR/config/config.json $ROOT_DIR/dist
-cp $ROOT_DIR/bin/* $ROOT_DIR/dist
+cp go-counter $ROOT_DIR/dist/bin
+cp $ROOT_DIR/config/*.json $ROOT_DIR/dist/config
+cp $ROOT_DIR/bin/* $ROOT_DIR/dist/bin
 
 echo "build success"
