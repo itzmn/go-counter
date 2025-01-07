@@ -3,6 +3,10 @@
 go-counter主要用于接收请求报文，按照预设好的统计逻辑基于redis存储计算，生成结果json，接口返回
 
 # 快速开始
+
+## 本地启动
+- redis需要准备好
+
 1、预定义统计逻辑，见配置文件 ./config/statisticVars.json
 
 ```go
@@ -57,7 +61,27 @@ curl -d '{"activityId":"ac123", "amount":12, "name":"zhangsan", "user":"zhangsan
 - requestId 该笔请求的流水
 
 
+## docker启动
 
+1、启动redis
+
+```shell
+docker run -d -p 16379:6379 --network jk-network --network-alias redis --name redis redis的镜像
+```
+
+由于编译好的项目需要连接redis，redis的容器需要和服务容器形成网络，构建了一个jk-network网络，也执行了redis的网络名称就是redis，在服务里面直接访问redis就可以访问到结果了
+
+2、启动服务
+```shell
+docker run -d -p 19999:19999 -p 20000:20000 --network jk-network --network-alias counter-03 --name go-counter-v1.0.3 go-counter:v1.0.3
+```
+和redis是相同的网络，config.json中连接redis的地址就是redis
+
+3、测试
+```shell
+curl -d '{"organization":"itzmn","activityId":"ac123", "amount":12, "name":"zhangsan", "user":"zhangsan", "timestamp":1733989840000, "requestId":"r123"}' http://localhost:19999/counter
+{"organization":"itzmn","activityId":"ac123", "amount":12, "name":"zhangsan", "user":"zhangsan", "timestamp":1733989840000, "requestId":"dd2a73a44810cedebbc5798e6de3ed79","user_cnt_per_activity_1d":1,"amount_sum_per_activity_user_1d":12}
+```
 
 # 项目介绍
 
@@ -146,9 +170,5 @@ counter:维度
 [comment]: <> (- distinct函数，存储统计周期内的每个槽去重原始数据，记录最新一次出现时间[{"val":"zmn","ts":1234},{"val":"lisi","ts":1235}])
 
 [comment]: <> (- sum函数 存储每一个时间槽内的统计汇总值，[{"ts":123,"val":2},{"ts":124,"val":4}])
-
-
-
-
 
 

@@ -1,0 +1,8 @@
+{
+  "ServerPort": 19999,
+  "RedisConf": {
+    "Host": "redis",
+    "Port": 6379,
+    "Passwd": ""
+  }
+}

@@ -16,7 +16,7 @@ WORKDIR /opt/code
 ADD .  /opt/code/
 
 #在Docker工作目录下执行命令，编译服务
-RUN /opt/code/bin/build-docker.sh
+RUN /opt/code/bin/build.sh
 
 RUN cp -rav /opt/code/dist /opt/go-counter
 
@@ -26,4 +26,4 @@ WORKDIR /opt/go-counter
 EXPOSE 19999 20000
 
 #执行项目的命令，启动服务
-CMD ["./start.sh"]
+CMD ["./bin/docker-start.sh"]

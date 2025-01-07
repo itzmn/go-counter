@@ -33,7 +33,6 @@ func HMSetRedisData(key string, fields ...interface{}) error {
 
 		return err
 	}
-
 	return nil
 
 }
