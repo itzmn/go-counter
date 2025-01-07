@@ -16,11 +16,13 @@ import (
 )
 
 func main() {
-
+	var logDir = flag.String("log", "./log", "log dir")
 	//test_counter_mode := flag.Bool("test_counter_mode", false, "enable test_counter mode, use default counter variable")
 	start := time.Now().UnixNano()
 	flag.Parse()
-	if !zlog.InitLogger(&zlog.LogConf{}) {
+	if !zlog.InitLogger(&zlog.LogConf{
+		LogDir: *logDir,
+	}) {
 		fmt.Println("init log err")
 		return
 	}

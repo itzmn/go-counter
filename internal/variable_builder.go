@@ -14,7 +14,7 @@ import (
 )
 
 // 先从 json中获取 需要统计的变量，后续迁移至数据库管理
-var variablesPath = flag.String("variables", "./config/statisticVars.json", "statisticVars.json path")
+var variablesPath = flag.String("variablesPath", "./config/statisticVars.json", "statisticVars.json path")
 
 var counterVariables map[string][]CounterC
 var VariableMutex sync.RWMutex
