@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/tidwall/gjson"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -14,6 +16,7 @@ func sendRequest(url string, userCnt int, activityCnt int, amountRand int) {
 
 	// 将请求体编码为 JSON
 
+	start := time.Now().UnixNano()
 	str := `{"activityId":"%v", "amount":%v, "organization":"itzmn", "user":"%v", "timestamp":%v}`
 	// 使用当前时间戳作为随机数种子
 	rand.Seed(time.Now().UnixNano())
@@ -21,7 +24,7 @@ func sendRequest(url string, userCnt int, activityCnt int, amountRand int) {
 	user := "zhangsan" + strconv.Itoa(rand.Intn(userCnt))
 	activity := "ac" + strconv.Itoa(rand.Intn(activityCnt))
 
-	body := fmt.Sprintf(str, activity,  rand.Intn(amountRand), user, time.Now().UnixNano()/1e6)
+	body := fmt.Sprintf(str, activity, rand.Intn(amountRand), user, time.Now().UnixNano()/1e6)
 
 	// 发送 POST 请求
 	resp, err := http.Post(url, "application/json", strings.NewReader(body))
@@ -29,10 +32,13 @@ func sendRequest(url string, userCnt int, activityCnt int, amountRand int) {
 		log.Printf("Error sending request: %v", err)
 		return
 	}
+	bytes, _ := io.ReadAll(resp.Body)
+	requestId := gjson.Get(string(bytes), "requestId").String()
 	defer resp.Body.Close()
 
+	cost := time.Now().UnixNano() - start
 	// 打印响应状态
-	fmt.Printf("Response status: %d\n", resp.StatusCode)
+	fmt.Printf("requestId: %v, Response status: %d, cost: %v\n", requestId, resp.StatusCode, cost/1e6)
 }
 
 func main() {
